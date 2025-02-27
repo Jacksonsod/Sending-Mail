@@ -55,7 +55,7 @@ $conn->close();
             $mail->addReplyTo($sender_email); // Allows recipients to reply to sender
             $mail->Subject = $subject;
             $mail->Body = $message;
-
+            //$mail->bcc
             // Add recipients from database
             foreach ($emails as $email) {
                 $mail->addAddress($email);
