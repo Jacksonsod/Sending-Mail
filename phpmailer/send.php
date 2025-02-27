@@ -4,7 +4,16 @@ use PHPMailer\PHPMailer\Exception;
 
 require 'vendor/autoload.php';
 
-// Database Connection
+
+// Check if form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name=$_POST['sender_name'];
+    $sender_email = $_POST['sender_email']; // Get sender email from form
+    $subject = $_POST['subject'];
+    $message = $_POST['message'];
+    $department =$_POST['select'];
+
+    // Database Connection
 $conn=mysqli_connect("localhost","root","","mails");
 
 // Check connection
@@ -13,7 +22,7 @@ if ($conn->connect_error) {
 }
 
 // Fetch emails from database
-$sql = "SELECT email FROM emails";
+$sql = "SELECT email FROM emails where department='$department'";
 $result = $conn->query($sql);
 
 $emails = [];
@@ -23,12 +32,6 @@ if ($result->num_rows > 0) {
     }
 }
 $conn->close();
-
-// Check if form is submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $sender_email = $_POST['sender_email']; // Get sender email from form
-    $subject = $_POST['subject'];
-    $message = $_POST['message'];
 
     // Validate email format
     if (!filter_var($sender_email, FILTER_VALIDATE_EMAIL)) {
@@ -48,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mail->Port = 587; // 465 for SSL, 587 for TLS
 
             // Sender info
-            $mail->setFrom($sender_email, 'Sender Name');
+            $mail->setFrom($sender_email, $name);
             $mail->addReplyTo($sender_email); // Allows recipients to reply to sender
             $mail->Subject = $subject;
             $mail->Body = $message;
@@ -74,13 +77,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send Bulk Emails</title>
+    <title>Send Emails</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
 </head>
 <body>
 
     <h2>Send Bulk Emails</h2>
     <form method="post">
+    <label for="sender_email">Enter Names:</label><br>
+    <input type="text" id="sender_name" name="sender_name" required><br><br>
         <label for="sender_email">Your Email:</label><br>
         <input type="email" id="sender_email" name="sender_email" required><br><br>
 
@@ -89,6 +94,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <label for="message">Message:</label><br>
         <textarea id="message" name="message" rows="4" required></textarea><br><br>
+        <select name="select">
+        <option >-- Select Department --</option>
+            <?php
+            $conn=mysqli_connect("localhost","root","","mails");
+            $select=mysqli_query($conn,"SELECT department FROM emails");
+            while ($result=mysqli_fetch_array($select)) {
+             ?>
+             <option value="<?php echo $result['department'] ; ?>"><?php echo $result['department'] ; ?></option>
+            <?php
+            }
+            ?>
+        </select>
 
         <button type="submit">Send Emails</button>
     </form>
